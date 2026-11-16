@@ -81,6 +81,13 @@ def _resolve_sqlite_uri(env_var_name, default_path):
                 p = (BASE_DIR / p).resolve()
             return f"sqlite:///{p.as_posix()}"
         return raw
+
+    # Serverless fallback (Vercel): Use /tmp if no external DATABASE_URL provided
+    if os.environ.get("VERCEL"):
+        import tempfile
+        tmp_db = Path(tempfile.gettempdir()) / "policysetu.db"
+        return f"sqlite:///{tmp_db.as_posix()}"
+
     return f"sqlite:///{default_path.resolve().as_posix()}"
 
 
