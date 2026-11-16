@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Settings & Preferences — PolicySetu{% endblock %}
+{% block page_name %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Preferences & Configuration</h1>
+  <p class="page-subtitle">Configure your language display, regional filters, and user interface preferences</p>
+</div>
+
+<div class="settings-grid">
+  <!-- Settings Left Navigation -->
+  <aside class="settings-nav">
+    <div class="settings-nav-link active" onclick="switchSettingsTab('general', this)">
+      General & Language
+    </div>
+    <div class="settings-nav-link" onclick="switchSettingsTab('notifications', this)">
+      Sector Interests
+    </div>
+    <div class="settings-nav-link" onclick="switchSettingsTab('about', this)">
+      Application Info
+    </div>
+  </aside>
+
+  <!-- Settings Right Content Panel -->
+  <div class="settings-content">
+    <!-- General & Language Section -->
+    <section id="tab-general" class="settings-section">
+      <div class="settings-section-title">Interface & Language Settings</div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Primary Display Language</div>
+          <div class="toggle-desc">Choose between English, Hindi (Devanagari), or Marathi for dashboard labels and policy summaries.</div>
+        </div>
+        <div style="min-width:160px;">
+          <select id="prefLang" class="form-control" onchange="updateLanguagePref(this.value)">
+            <option value="en" {% if current_lang == 'en' %}selected{% endif %}>English</option>
+            <option value="hi" {% if current_lang == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+            <option value="mr" {% if current_lang == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Interface Theme</div>
+          <div class="toggle-desc">Toggle between high-contrast Civic Paper Light theme and Dark Navy Night mode.</div>
+        </div>
+        <div>
+          <button type="button" class="btn btn-outline btn-sm" id="settingsThemeToggle" onclick="toggleThemeFromSettings()">
+            Toggle Theme
+          </button>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Auto-expand Detailed AI Notes</div>
+          <div class="toggle-desc">Automatically display full section-by-section breakdown on policy cards.</div>
+        </div>
+        <div>
+          <button type="button" class="toggle-switch on" onclick="this.classList.toggle('on'); showToast('Preference saved.', 'success');"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sector Interests Section -->
+    <section id="tab-notifications" class="settings-section" style="display:none;">
+      <div class="settings-section-title">Default Policy Categories of Interest</div>
+      <p style="font-size:var(--text-sm); color:var(--color-muted); margin-bottom:var(--space-4);">
+        Filter the home dashboard feed according to your primary professional or personal focus areas.
+      </p>
+
+      {% set cats = ['Agriculture & Farmers', 'Education & Research', 'Healthcare & Welfare', 'Taxation & Finance', 'Digital Governance', 'Small Business & MSME'] %}
+      {% for c in cats %}
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">{{ c }}</div>
+          <div class="toggle-desc">Prioritize new alerts and circulars related to this sector.</div>
+        </div>
+        <div>
+          <button type="button" class="toggle-switch on" onclick="this.classList.toggle('on'); showToast('Sector filter updated.', 'success');"></button>
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    <!-- Application Info Section -->
+    <section id="tab-about" class="settings-section" style="display:none;">
+      <div class="settings-section-title">About PolicySetu</div>
+      <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-4);">
+        <img src="{{ url_for('static', filename='img/app-icon.png') }}" alt="PolicySetu App Icon" style="width:48px; height:48px; border-radius:var(--radius-md);">
+        <div>
+          <div style="font-weight:700; font-size:var(--text-lg); color:var(--color-navy);">PolicySetu</div>
+          <div style="font-size:var(--text-xs); color:var(--color-muted);">Version {{ app_version }} | Architecture v1.0</div>
+        </div>
+      </div>
+
+      <p style="font-size:var(--text-sm); color:var(--color-slate); line-height:1.7; margin-bottom:var(--space-4);">
+        <strong>Tagline:</strong> Bridging Government Policies & People.<br>
+        PolicySetu is designed to give every Indian citizen, business, farmer, and researcher immediate clarity on legislative notifications without bureaucratic confusion or paywalls.
+      </p>
+
+      <div style="padding:var(--space-3); background:var(--color-bg); border-radius:var(--radius-md); font-size:var(--text-xs); color:var(--color-slate);">
+        <strong>Security & Privacy Commitment:</strong> No SMS alerts, zero phone number collection, no OTP registration. All intelligence is consumed directly on the secure web dashboard.
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchSettingsTab(tabName, el) {
+  document.querySelectorAll('.settings-nav-link').forEach(btn => btn.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('tab-general').style.display = 'none';
+  document.getElementById('tab-notifications').style.display = 'none';
+  document.getElementById('tab-about').style.display = 'none';
+
+  const target = document.getElementById(`tab-${tabName}`);
+  if (target) target.style.display = 'block';
+}
+
+function updateLanguagePref(lang) {
+  const langNames = { en: 'English', hi: 'हिन्दी (Hindi)', mr: 'मराठी (Marathi)' };
+  localStorage.setItem('ps_lang', lang);
+  showToast(`Language set to ${langNames[lang] || lang}. More regional Indian languages coming soon!`, 'info', 4000);
+  const url = new URL(window.location.href);
+  url.searchParams.set('lang', lang);
+  setTimeout(() => {
+    window.location.href = url.toString();
+  }, 400);
+}
+
+function toggleThemeFromSettings() {
+  const current = PS.theme || 'light';
+  const newTheme = current === 'dark' ? 'light' : 'dark';
+  applyTheme(newTheme);
+  showToast(newTheme === 'dark' ? 'Dark theme enabled' : 'Light theme enabled', 'info', 2500);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('settingsThemeToggle');
+  if (toggleBtn) {
+    const isDark = (localStorage.getItem('ps_theme') || 'light') === 'dark';
+    toggleBtn.innerText = isDark ? 'Dark Theme' : 'Light Theme (Default)';
+  }
+});
+</script>
+{% endblock %}

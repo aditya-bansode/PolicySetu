@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found — PolicySetu{% endblock %}
+{% block page_name %}404 Not Found{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-code">404</div>
+  <h1 class="error-title">Policy or Page Not Found</h1>
+  <p class="error-text">
+    The policy document, notification, or section you are seeking may have been amended, moved, or is not in our monitored index.
+  </p>
+  <div style="display:flex; gap:var(--space-3); justify-content:center;">
+    <a href="{{ url_for('main.home') }}" class="btn btn-primary">Return to Home</a>
+    <a href="{{ url_for('policies.list_policies') }}" class="btn btn-outline">Explore Policies</a>
+  </div>
+</div>
+{% endblock %}

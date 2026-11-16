@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav.all_policies', 'All Policies') }} — PolicySetu{% endblock %}
+{% block page_name %}{{ t('nav.all_policies', 'All Policies') }}{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1 class="page-title">{{ t('nav.all_policies', 'All Policies') }}</h1>
+  <p class="page-subtitle">{{ t('policy_list.subtitle', 'Browse and filter policies from verified Indian government sources') }}</p>
+</div>
+
+{% if is_demo_mode %}
+<div class="demo-banner">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text">
+    <strong>{{ t('common.demo_data', 'Demo Data') }}</strong> — {{ t('policy_list.demo_note', 'Policies shown are sample records for UI preview.') }}
+  </div>
+</div>
+{% endif %}
+<!-- Status Tabs (All / New / Updated) -->
+<div class="policy-status-tabs" role="tablist" aria-label="Policy status filters">
+  <button type="button" class="policy-tab active" data-status="all" role="tab" aria-selected="true">
+    <span class="tab-label">{{ t('nav.all_policies', 'All Policies') }}</span>
+    <span class="tab-count" id="countAll">--</span>
+  </button>
+  <button type="button" class="policy-tab" data-status="new" role="tab" aria-selected="false">
+    <span class="tab-label">{{ t('nav.new_policies', 'New Policies') }}</span>
+    <span class="tab-count" id="countNew">--</span>
+  </button>
+  <button type="button" class="policy-tab" data-status="updated" role="tab" aria-selected="false">
+    <span class="tab-label">{{ t('nav.updated_policies', 'Updated Policies') }}</span>
+    <span class="tab-count" id="countUpdated">--</span>
+  </button>
+</div>
+
+<!-- Filters Panel -->
+<div class="filters-panel" role="search" aria-label="Policy filters">
+  <div class="filters-row">
+
+    <div class="filter-group" style="flex:2;min-width:220px">
+      <label for="filterSearch">{{ t('filters.search_policies', 'Search Policies') }}</label>
+      <div class="search-box">
+        <span class="search-icon">
+          <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <input type="text" id="filterSearch" class="form-control"
+               placeholder="{{ t('filters.search_placeholder', 'Search by title, keyword, ministry...') }}"
+               autocomplete="off" aria-label="Search policies">
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label for="filterCategory">{{ t('filters.category', 'Category') }}</label>
+      <select id="filterCategory" class="form-control" aria-label="Filter by category">
+        <option value="">{{ t('filters.all_categories', 'All Categories') }}</option>
+        {% for cat in categories %}
+        <option value="{{ cat.slug }}">
+          {% if current_lang == 'hi' and cat.name_hi %}{{ cat.name_hi }}
+          {% elif current_lang == 'mr' and cat.name_mr %}{{ cat.name_mr }}
+          {% else %}{{ cat.name }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="filterType">{{ t('filters.document_type', 'Document Type') }}</label>
+      <select id="filterType" class="form-control" aria-label="Filter by type">
+        <option value="">{{ t('filters.all_types', 'All Types') }}</option>
+        <option value="policy">{{ t('filters.policy', 'Policy') }}</option>
+        <option value="act">{{ t('filters.act', 'Act') }}</option>
+        <option value="scheme">{{ t('filters.scheme', 'Scheme') }}</option>
+        <option value="guideline">{{ t('filters.guideline', 'Guideline') }}</option>
+        <option value="notification">{{ t('filters.notification', 'Notification') }}</option>
+        <option value="circular">{{ t('filters.circular', 'Circular') }}</option>
+        <option value="order">{{ t('filters.order', 'Order') }}</option>
+        <option value="government_resolution">{{ t('filters.government_resolution', 'Government Resolution') }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="filterState">{{ t('filters.jurisdiction', 'Jurisdiction') }}</label>
+      <select id="filterState" class="form-control" aria-label="Filter by jurisdiction">
+        <option value="">{{ t('filters.all_jurisdictions', 'All Jurisdictions') }}</option>
+        <option value="Central Government">{{ t('filters.central_gov', 'Central Government') }}</option>
+        <option value="Maharashtra">Maharashtra</option>
+        <option value="Karnataka">Karnataka</option>
+        <option value="Tamil Nadu">Tamil Nadu</option>
+        <option value="Uttar Pradesh">Uttar Pradesh</option>
+        <option value="Gujarat">Gujarat</option>
+        <option value="Rajasthan">Rajasthan</option>
+        <option value="West Bengal">West Bengal</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="filterSort">{{ t('filters.sort_by', 'Sort By') }}</label>
+      <select id="filterSort" class="form-control" aria-label="Sort policies">
+        <option value="date_desc">{{ t('filters.newest_first', 'Newest First') }}</option>
+        <option value="date_asc">{{ t('filters.oldest_first', 'Oldest First') }}</option>
+        <option value="popular">{{ t('filters.most_viewed', 'Most Viewed') }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group" style="flex:0 0 auto;padding-top:1.5rem">
+      <button id="clearFilters" class="btn btn-ghost btn-sm">{{ t('common.clear', 'Clear') }}</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Results Info -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">
+  <div id="resultsInfo" class="text-muted text-sm" aria-live="polite" aria-label="Search results count">
+    {{ t('policy_list.loading', 'Loading policies...') }}
+  </div>
+  {% if is_demo_mode %}
+  <span class="badge badge-demo">{{ t('common.demo_data', 'Demo Data') }}</span>
+  {% else %}
+  <span class="badge badge-verified" style="font-size:var(--text-xs); background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.3);">Official Knowledge Base</span>
+  {% endif %}
+</div>
+
+<!-- Policy Grid -->
+<div id="policyGrid" class="policy-grid" role="list" aria-label="Policy results">
+  <!-- Populated by search.js -->
+  <div class="loading-spinner"><div class="spinner"></div> Loading policies...</div>
+</div>
+
+<!-- Pagination -->
+<div id="pagination"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}

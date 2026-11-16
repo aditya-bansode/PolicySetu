@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}{{ policy.title | truncate(60) }} — PolicySetu{% endblock %}
+{% block page_name %}Policy Detail{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('policies.list_policies') }}" class="breadcrumb-sep" style="color:var(--color-muted)">All Policies</a>
+<span class="breadcrumb-sep">/</span>
+<span class="breadcrumb-current">{{ policy.title | truncate(40) }}</span>
+{% endblock %}
+
+{% block content %}
+
+{% if is_demo_mode %}
+<div class="demo-banner">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text"><strong>Demo Data</strong> — Sample policy content for UI preview.</div>
+</div>
+{% endif %}
+
+<!-- Policy Header -->
+<div class="detail-card" style="margin-bottom:var(--space-5)">
+  <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4)">
+    {% if policy.is_new %}<span class="badge badge-new">New</span>{% endif %}
+    {% if policy.is_modified %}<span class="badge badge-updated">Updated</span>{% endif %}
+    <span class="badge badge-category">{{ policy.category }}</span>
+    <span class="badge badge-{{ 'central' if policy.jurisdiction == 'Central Government' else 'state' }}">
+      {{ policy.jurisdiction }}
+    </span>
+    <span class="badge" style="background:var(--color-bg-alt);color:var(--color-muted)">
+      {{ policy.type | title }}
+    </span>
+    {% if is_demo_mode %}
+    <span class="badge badge-demo" style="margin-left:auto">Demo Record</span>
+    {% else %}
+    <span class="badge badge-verified" style="margin-left:auto; background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.3);">Official Record</span>
+    {% endif %}
+  </div>
+
+  <h1 style="font-size:var(--text-2xl);font-weight:700;color:#0F172A;line-height:1.3;margin-bottom:var(--space-3)">
+    {% if current_lang == 'hi' and policy.title_hi %}{{ policy.title_hi }}
+    {% elif current_lang == 'mr' and policy.title_mr %}{{ policy.title_mr }}
+    {% else %}{{ policy.title }}{% endif %}
+  </h1>
+
+  <div style="font-size:var(--text-sm);color:var(--color-muted);display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:center">
+    <span>{{ policy.ministry }}</span>
+    {% if policy.department %}<span>/ {{ policy.department }}</span>{% endif %}
+    <span style="margin-left:auto;display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap">
+      {% if policy.official_url_available and policy.official_url %}
+      <a href="{{ policy.official_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-accent btn-sm">
+        {{ t('common.official_doc', 'View Official Document') }} &rarr;
+      </a>
+      {% else %}
+      <span class="badge" style="background:var(--color-bg-alt);color:var(--color-muted);padding:6px 12px;font-size:var(--text-xs);border:1px solid var(--color-border);" title="Official direct document link unavailable">
+        Official document link unavailable
+      </span>
+      {% if policy.source_listing_url or policy.source_base_url %}
+      <a href="{{ policy.source_listing_url or policy.source_base_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+        Source Portal &rarr;
+      </a>
+      {% endif %}
+      {% endif %}
+      {% if versions | length > 1 %}
+      <a href="{{ url_for('policies.policy_compare', policy_id=policy.id) }}" class="btn btn-outline btn-sm">
+        {{ t('common.compare_versions', 'Compare Versions') }}
+      </a>
+      {% endif %}
+      <a href="{{ url_for('policies.policy_impact', policy_id=policy.id) }}" class="btn btn-outline btn-sm">
+        {{ t('common.impact_analysis', 'Impact Analysis') }}
+      </a>
+    </span>
+  </div>
+</div>
+
+<!-- Detail Layout -->
+<div class="detail-layout">
+
+  <!-- Main Column -->
+  <div class="detail-main">
+
+    <!-- Scholarship Scheme Information (MahaDBT Official Record) -->
+    {% if policy.is_scholarship %}
+    <div class="detail-card" style="border-left: 4px solid var(--color-primary); background: #ffffff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4)">
+        <div class="detail-card-title" style="margin-bottom:0;color:var(--color-primary)">
+          Official MahaDBT Scholarship Intelligence
+        </div>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+          {% if policy.academic_year %}
+          <span class="badge" style="background:rgba(37,99,235,0.12);color:#1d4ed8;font-weight:600">
+            AY {{ policy.academic_year }}
+          </span>
+          {% endif %}
+          {% if policy.application_status %}
+          <span class="badge" style="background:rgba(16,185,129,0.12);color:#059669;font-weight:600">
+            {{ policy.application_status }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:var(--space-4);margin-bottom:var(--space-4)">
+        {% if policy.income_limit %}
+        <div style="padding:var(--space-3);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+          <div style="font-size:var(--text-xs);color:var(--color-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">Income Ceiling</div>
+          <div style="font-size:var(--text-sm);font-weight:600;color:#0F172A">{{ policy.income_limit }}</div>
+        </div>
+        {% endif %}
+
+        {% if policy.caste_category %}
+        <div style="padding:var(--space-3);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+          <div style="font-size:var(--text-xs);color:var(--color-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">Target Category</div>
+          <div style="font-size:var(--text-sm);font-weight:600;color:#0F172A">{{ policy.caste_category }}</div>
+        </div>
+        {% endif %}
+
+        {% if policy.course_criteria %}
+        <div style="padding:var(--space-3);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border);grid-column:1/-1">
+          <div style="font-size:var(--text-xs);color:var(--color-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">Courses Covered</div>
+          <div style="font-size:var(--text-sm);color:#1E293B">{{ policy.course_criteria }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if policy.eligibility_criteria %}
+      <div style="margin-bottom:var(--space-4)">
+        <h4 style="font-size:var(--text-sm);font-weight:700;color:#0F172A;margin-bottom:var(--space-2)">Eligibility Criteria</h4>
+        <p style="font-size:var(--text-sm);line-height:1.7;color:#374151;white-space:pre-line">{{ policy.eligibility_criteria }}</p>
+      </div>
+      {% endif %}
+
+      {% if policy.benefit_details %}
+      <div style="margin-bottom:var(--space-4)">
+        <h4 style="font-size:var(--text-sm);font-weight:700;color:#0F172A;margin-bottom:var(--space-2)">Benefit Details</h4>
+        <p style="font-size:var(--text-sm);line-height:1.7;color:#374151;white-space:pre-line">{{ policy.benefit_details }}</p>
+      </div>
+      {% endif %}
+
+      {% if policy.required_documents %}
+      <div style="margin-bottom:var(--space-4)">
+        <h4 style="font-size:var(--text-sm);font-weight:700;color:#0F172A;margin-bottom:var(--space-2)">Required Documents</h4>
+        <p style="font-size:var(--text-sm);line-height:1.7;color:#374151">{{ policy.required_documents }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Official Portal Verification Notice -->
+      <div style="padding:var(--space-3);background:rgba(37,99,235,0.06);border-radius:var(--radius-md);border:1px solid rgba(37,99,235,0.2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--space-3)">
+        <div style="font-size:var(--text-xs);color:#1e3a8a;line-height:1.5">
+          <strong>Important Notice:</strong> Fresh and renewal applications for <strong>Academic Year 2026-27</strong> are processed exclusively through <strong>MahaDBT 2.0</strong>.
+        </div>
+        <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+          <a href="https://mahadbt2.maharashtra.gov.in/" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+            Apply on MahaDBT 2.0 &rarr;
+          </a>
+          {% if policy.official_guidelines_url %}
+          <a href="{{ policy.official_guidelines_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+            Official Guidelines PDF &rarr;
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- AI Summary -->
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.summary_overview', 'AI Summary & Overview') }}</div>
+      <p style="font-size:var(--text-base);line-height:1.8;color:#374151;margin-bottom:var(--space-4)">
+        {% if current_lang == 'hi' and policy.summary_hi %}{{ policy.summary_hi }}
+        {% elif current_lang == 'mr' and policy.summary_mr %}{{ policy.summary_mr }}
+        {% else %}{{ policy.summary }}{% endif %}
+      </p>
+      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm"
+                onclick="document.getElementById('langEN').classList.toggle('hidden')"
+                style="font-size:var(--text-xs)">
+          English
+        </button>
+        {% if policy.summary_hi %}
+        <button class="btn btn-ghost btn-sm"
+                onclick="document.getElementById('langHI').classList.toggle('hidden')"
+                style="font-size:var(--text-xs)">
+          हिन्दी में पढ़ें
+        </button>
+        {% endif %}
+        {% if policy.summary_mr %}
+        <button class="btn btn-ghost btn-sm"
+                onclick="document.getElementById('langMR').classList.toggle('hidden')"
+                style="font-size:var(--text-xs)">
+          मराठीत वाचा
+        </button>
+        {% endif %}
+        <span class="badge badge-demo" style="font-size:var(--text-xs)">{{ t('policy_detail.ai_generated', 'AI Generated') }}</span>
+      </div>
+
+      {% if policy.summary_hi %}
+      <div id="langHI" class="hidden" style="margin-top:var(--space-4);padding:var(--space-4);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+        <div style="font-size:var(--text-xs);color:var(--color-muted);font-weight:600;margin-bottom:var(--space-2)">हिन्दी</div>
+        <p style="font-size:var(--text-sm);line-height:1.8;font-family:var(--font-devanagari)">{{ policy.summary_hi }}</p>
+      </div>
+      {% endif %}
+
+      {% if policy.summary_mr %}
+      <div id="langMR" class="hidden" style="margin-top:var(--space-4);padding:var(--space-4);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+        <div style="font-size:var(--text-xs);color:var(--color-muted);font-weight:600;margin-bottom:var(--space-2)">मराठी</div>
+        <p style="font-size:var(--text-sm);line-height:1.8;font-family:var(--font-devanagari)">{{ policy.summary_mr }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Key Provisions -->
+    {% if policy.key_points %}
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.key_provisions', 'Key Provisions') }}</div>
+      <div class="key-points-list">
+        {% for point in policy.key_points %}
+        <div class="key-point">
+          <div class="key-point-dot"></div>
+          <span>{{ point }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Potentially Affected Groups -->
+    {% if policy.affected_groups %}
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.affected_groups', 'Potentially Affected Groups') }}</div>
+      <div style="padding:var(--space-3);background:var(--color-warning-bg);border-radius:var(--radius-md);border:1px solid rgba(217,119,6,0.2);margin-bottom:var(--space-4);font-size:var(--text-xs);color:var(--color-warning)">
+        {{ t('policy_detail.affected_disclaimer', 'The groups listed below are potentially affected based on AI analysis of the policy document. This is not a determination of legal eligibility. Please refer to the official document for eligibility criteria.') }}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+        {% for group, desc in policy.affected_groups.items() %}
+        <div style="padding:var(--space-4);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+          <div style="font-weight:600;color:#0F172A;margin-bottom:var(--space-1);font-size:var(--text-sm)">
+            {{ group }}
+          </div>
+          <div style="font-size:var(--text-sm);color:var(--color-muted);line-height:1.6">{{ desc }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Version History -->
+    {% if versions %}
+    <div class="detail-card">
+      <div class="detail-card-title">Document Version History</div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+        {% for ver in versions | sort(attribute='version_number', reverse=True) %}
+        <div style="display:flex;align-items:flex-start;gap:var(--space-4);padding:var(--space-4);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">
+          <div style="width:32px;height:32px;background:var(--color-navy);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--text-xs);font-weight:700;flex-shrink:0">
+            v{{ ver.version_number }}
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:4px">
+              <span style="font-weight:600;font-size:var(--text-sm)">Version {{ ver.version_number }}</span>
+              {% if loop.first %}<span class="badge badge-new" style="font-size:0.65rem">Current</span>{% endif %}
+              <span style="font-size:var(--text-xs);color:var(--color-muted);margin-left:auto">{{ ver.created_at }}</span>
+            </div>
+            <p style="font-size:var(--text-sm);color:var(--color-muted);line-height:1.5">{{ ver.diff_summary }}</p>
+            {% if ver.changed_sections %}
+            <div style="margin-top:var(--space-2);display:flex;flex-wrap:wrap;gap:var(--space-1)">
+              {% for section in ver.changed_sections %}
+              <span class="badge badge-updated" style="font-size:0.65rem">{{ section }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% if versions | length > 1 and not loop.first %}
+          <a href="{{ url_for('policies.policy_compare', policy_id=policy.id) }}?v1={{ ver.version_number }}&v2={{ versions[-1].version_number }}"
+             class="btn btn-outline btn-sm">Compare</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Sidebar Column -->
+  <div class="detail-sidebar">
+
+    <!-- Important Dates -->
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.important_dates', 'Important Dates') }}</div>
+      <div class="meta-row">
+        <span class="meta-key">{{ t('common.published', 'Published') }}</span>
+        <span class="meta-val">{{ policy.published_date }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">{{ t('common.detected', 'Detected') }}</span>
+        <span class="meta-val">{{ policy.detected_date }}</span>
+      </div>
+      {% if policy.effective_date %}
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.effective', 'Effective') }}</span>
+        <span class="meta-val">{{ policy.effective_date }}</span>
+      </div>
+      {% endif %}
+      {% if policy.expiry_date %}
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.expires', 'Expires') }}</span>
+        <span class="meta-val">{{ policy.expiry_date }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Policy Metadata -->
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.details', 'Details') }}</div>
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.source', 'Source') }}</span>
+        <span class="meta-val">{{ policy.source_name }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.ministry', 'Ministry') }}</span>
+        <span class="meta-val">{{ policy.ministry }}</span>
+      </div>
+      {% if policy.department %}
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.department', 'Department') }}</span>
+        <span class="meta-val">{{ policy.department }}</span>
+      </div>
+      {% endif %}
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.type', 'Type') }}</span>
+        <span class="meta-val">{{ policy.type | title }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">{{ t('policy_detail.doc_format', 'Doc Format') }}</span>
+        <span class="meta-val">{{ policy.document_type | upper }}</span>
+      </div>
+      {% if policy.is_scholarship %}
+      <div class="meta-row">
+        <span class="meta-key">Academic Year</span>
+        <span class="meta-val" style="color:#1d4ed8;font-weight:600">{{ policy.academic_year }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Status</span>
+        <span class="meta-val" style="color:#059669;font-weight:600">{{ policy.application_status }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Last Verified</span>
+        <span class="meta-val">{{ policy.last_verified_at or policy.detected_date }}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-key">Portal Engine</span>
+        <span class="meta-val">MahaDBT 2.0</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Impact Areas -->
+    {% if policy.impact_areas %}
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.impact_areas', 'Impact Areas') }}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+        {% for area in policy.impact_areas %}
+        <span class="stakeholder-chip">{{ area }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Stakeholders -->
+    {% if policy.stakeholders %}
+    <div class="detail-card">
+      <div class="detail-card-title">{{ t('policy_detail.stakeholders', 'Stakeholder Groups') }}</div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+        {% for s in policy.stakeholders %}
+        <div style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm)">
+          <span>&bull;</span><span>{{ s }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:var(--space-3);font-size:var(--text-xs);color:var(--color-muted)">
+        * These groups are potentially affected — not a legal determination.
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Ask AI About This Policy -->
+    <div class="detail-card" style="background:linear-gradient(135deg,var(--color-navy) 0%,#1a3d8f 100%);border-color:var(--color-navy)">
+      <div style="font-weight:600;color:white;margin-bottom:var(--space-3)">{{ t('policy_detail.ask_ai_title', 'Ask PolicySetu AI') }}</div>
+      <p style="font-size:var(--text-sm);color:rgba(255,255,255,0.75);margin-bottom:var(--space-4);line-height:1.6">
+        {{ t('policy_detail.ask_ai_desc', 'Have questions about this policy? Ask our AI assistant for a plain-language explanation.') }}
+      </p>
+      <a href="{{ url_for('ai_chat.ask') }}" class="btn btn-accent btn-block">
+        {{ t('policy_detail.ask_ai_btn', 'Ask a Question') }}
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .hidden { display: none !important; }
+</style>
+
+{% endblock %}

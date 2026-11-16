@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}Government Source Monitor — PolicySetu{% endblock %}
+{% block page_name %}Government Source Monitor{% endblock %}
+
+{% block content %}
+<div class="system-notice-banner" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);background:rgba(11,42,111,0.06);border:1px solid rgba(11,42,111,0.15);border-radius:var(--radius-md);margin-bottom:var(--space-6);color:var(--color-navy);">
+  <span class="banner-icon" style="color:var(--color-navy);display:flex;">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="banner-text" style="font-size:var(--text-sm);">
+    <strong>Production Monitoring Engine Active</strong> — Background worker scans configured portals on a 15-minute interval. Inaccessible candidate portals requiring JavaScript or authenticated sessions are clearly marked below.
+  </div>
+</div>
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-4);">
+  <div>
+    <h1 class="page-title">Government Source Monitor</h1>
+    <p class="page-subtitle">Real-time health, crawl intervals, and ingestion metrics for verified official portals</p>
+  </div>
+  <div style="display:flex; align-items:center; gap:var(--space-3);">
+    <span class="badge badge-outline" id="auto-refresh-badge" style="font-size:0.75rem; color:var(--color-slate);">
+      Auto-refresh: <span id="countdown-val">30</span>s
+    </span>
+    <button class="btn btn-primary btn-sm" id="btn-run-scan" onclick="triggerFullScan()">
+      <svg class="icon icon-sm" style="margin-right:4px;" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      Run Adapter Check
+    </button>
+  </div>
+</div>
+
+<!-- Monitoring KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon navy">
+      <svg class="icon icon-md" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2l10 8H2l10-8z"></path></svg>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value" id="kpi-configured">{{ sources | length }}</div>
+      <div class="kpi-label">Configured Adapters</div>
+      <div class="kpi-sub">Verified official portals</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon green">
+      <svg class="icon icon-md" style="stroke:var(--color-success);" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+    </div>
+    <div class="kpi-data">
+      {% set active_cnt = sources | selectattr('status', 'equalto', 'active') | list | length %}
+      <div class="kpi-value" id="kpi-active" style="color:var(--color-success)">{{ active_cnt }}</div>
+      <div class="kpi-label">Healthy & Active</div>
+      <div class="kpi-sub">15-min scheduled scans</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon amber">
+      <svg class="icon icon-md" style="stroke:var(--color-warning);" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    </div>
+    <div class="kpi-data">
+      {% set inacc_cnt = sources | rejectattr('status', 'equalto', 'active') | list | length %}
+      <div class="kpi-value" id="kpi-inaccessible" style="color:var(--color-warning)">{{ inacc_cnt }}</div>
+      <div class="kpi-label">Inaccessible / Degraded</div>
+      <div class="kpi-sub">Requires auth, SPA, or session</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon saffron">
+      <svg class="icon icon-md" style="stroke:var(--color-saffron-dark);" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+    </div>
+    <div class="kpi-data">
+      {% set total_docs = sources | sum(attribute='policies_count') %}
+      <div class="kpi-value" id="kpi-extracted">{{ total_docs }}</div>
+      <div class="kpi-label">Extracted Documents</div>
+      <div class="kpi-sub">Indexed in knowledge base</div>
+    </div>
+  </div>
+</div>
+
+<!-- Source Table Detail -->
+<div class="section-header">
+  <h2 class="section-title">Verified Source Adapter Roster</h2>
+</div>
+
+<div class="table-wrapper" style="margin-bottom:var(--space-8);">
+  <table class="data-table" aria-label="Official Source Adapters" id="sources-table">
+    <thead>
+      <tr>
+        <th>Portal Name & URL</th>
+        <th>Jurisdiction</th>
+        <th>Monitoring Status</th>
+        <th>Interval</th>
+        <th>Last Checked</th>
+        <th>Last Success</th>
+        <th>Extracted</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="sources-tbody">
+      {% for source in sources %}
+      <tr id="source-row-{{ source.id }}">
+        <td>
+          <div class="source-name-cell">
+            <div>
+              <div class="source-name">{{ source.name }}</div>
+              <a href="{{ source.url }}" target="_blank" rel="noopener" class="source-url">{{ source.url }} &rarr;</a>
+              {% if source.last_error %}
+              <div class="source-error-notice" style="font-size:0.75rem; color:var(--color-error); margin-top:3px; max-width:420px; line-height:1.4;">
+                Notice: {{ source.last_error }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="badge {% if source.jurisdiction == 'Central Government' %}badge-central{% else %}badge-state{% endif %}">
+            {{ source.jurisdiction }}
+          </span>
+        </td>
+        <td>
+          <span class="d-flex align-center">
+            <span class="status-dot {{ source.status }}"></span>
+            <span class="badge badge-{{ source.status }}">
+              {% if source.status == 'active' %}
+                Active
+              {% elif source.status == 'degraded' %}
+                Degraded
+              {% else %}
+                Inaccessible
+              {% endif %}
+            </span>
+          </span>
+        </td>
+        <td style="font-size:var(--text-xs); color:var(--color-slate);">
+          15 mins
+        </td>
+        <td class="col-last-checked" style="font-size:var(--text-xs); white-space:nowrap;">
+          {{ source.last_checked | replace('T', ' ') | truncate(16, True, '') }}
+        </td>
+        <td class="col-last-success" style="font-size:var(--text-xs); color:var(--color-success); white-space:nowrap;">
+          {{ source.last_success | replace('T', ' ') | truncate(16, True, '') }}
+        </td>
+        <td class="col-docs-count">
+          <strong>{{ source.policies_count }}</strong>
+        </td>
+        <td>
+          <button class="btn btn-outline btn-sm btn-ping" onclick="triggerSourceScan({{ source.id }}, '{{ source.name | escape }}')">
+            Ping
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Architecture Integrity Rules Notice -->
+<div class="detail-card" style="border-left:4px solid var(--color-navy); margin-bottom:var(--space-8);">
+  <div class="detail-card-title">PolicySetu Truth in Monitoring Guarantee</div>
+  <p style="font-size:var(--text-sm); color:var(--color-slate); line-height:1.7;">
+    PolicySetu strictly enforces the rule that <em>no government source may be displayed as monitored unless an automated adapter has been authored, verified, and successfully executed</em>. Candidate sources that rely on client-side SPA rendering (such as India Code DSpace 7) or stateful ASP.NET session tokens (such as e-Gazette) are explicitly reported as <strong style="color:var(--color-warning);">Inaccessible</strong> until official headless or authenticated drivers are established.
+  </p>
+</div>
+
+<script>
+// 30-Second Real-Time Dashboard Refresh
+let refreshCountdown = 30;
+
+function updateCountdown() {
+  const el = document.getElementById('countdown-val');
+  if (el) {
+    el.textContent = refreshCountdown;
+  }
+  if (refreshCountdown <= 0) {
+    refreshCountdown = 30;
+    fetchMonitoringDashboardData();
+  } else {
+    refreshCountdown--;
+  }
+}
+
+setInterval(updateCountdown, 1000);
+
+async function fetchMonitoringDashboardData() {
+  try {
+    const res = await fetch('/api/sources');
+    const json = await res.json();
+    if (json && json.success && Array.isArray(json.data)) {
+      renderUpdatedSources(json.data);
+    }
+  } catch (err) {
+    console.warn('[Monitor] Background polling error:', err);
+  }
+}
+
+function renderUpdatedSources(sources) {
+  let activeCount = 0;
+  let inaccCount = 0;
+  let totalDocs = 0;
+
+  sources.forEach(s => {
+    if (s.status === 'active') activeCount++;
+    else inaccCount++;
+    totalDocs += (s.policies_count || s.documents_count || 0);
+
+    const row = document.getElementById(`source-row-${s.id}`);
+    if (row) {
+      const chkCell = row.querySelector('.col-last-checked');
+      if (chkCell && s.last_checked) chkCell.textContent = s.last_checked.replace('T', ' ').substring(0, 16);
+
+      const succCell = row.querySelector('.col-last-success');
+      if (succCell && s.last_success) succCell.textContent = s.last_success.replace('T', ' ').substring(0, 16);
+
+      const docsCell = row.querySelector('.col-docs-count');
+      if (docsCell) docsCell.innerHTML = `<strong>${s.policies_count || s.documents_count || 0}</strong>`;
+    }
+  });
+
+  const kpiAct = document.getElementById('kpi-active');
+  if (kpiAct) kpiAct.textContent = activeCount;
+
+  const kpiInacc = document.getElementById('kpi-inaccessible');
+  if (kpiInacc) kpiInacc.textContent = inaccCount;
+
+  const kpiExt = document.getElementById('kpi-extracted');
+  if (kpiExt) kpiExt.textContent = totalDocs;
+}
+
+// Manual Action Triggers
+async function triggerFullScan() {
+  const btn = document.getElementById('btn-run-scan');
+  if (btn) btn.disabled = true;
+  if (window.showToast) showToast('Initiating policy scan cycle across configured adapters...', 'info');
+
+  try {
+    const res = await fetch('/api/monitoring/scan', { method: 'POST' });
+    const json = await res.json();
+    if (json.success) {
+      const d = json.data;
+      if (window.showToast) {
+        showToast(`Scan complete: ${d.new_documents_detected} new, ${d.modified_documents_detected} modified.`, 'success');
+      }
+      fetchMonitoringDashboardData();
+    } else {
+      if (window.showToast) showToast(`Scan warning: ${json.error || 'Check server logs'}`, 'warning');
+    }
+  } catch (err) {
+    if (window.showToast) showToast(`Scan request failed: ${err.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function triggerSourceScan(sourceId, sourceName) {
+  if (window.showToast) showToast(`Scanning ${sourceName}...`, 'info');
+  try {
+    const res = await fetch(`/api/monitoring/sources/${sourceId}/scan`, { method: 'POST' });
+    const json = await res.json();
+    if (json.success) {
+      const d = json.data;
+      if (d.status === 'success') {
+        if (window.showToast) showToast(`Success: Found ${d.documents_found} docs (${d.new_documents} new)`, 'success');
+      } else {
+        if (window.showToast) showToast(`Status: ${d.status} (${d.message || d.error || 'Notice'})`, 'warning');
+      }
+      fetchMonitoringDashboardData();
+    } else {
+      if (window.showToast) showToast(`Scan error: ${json.error}`, 'error');
+    }
+  } catch (err) {
+    if (window.showToast) showToast(`Request failed: ${err.message}`, 'error');
+  }
+}
+</script>
+{% endblock %}

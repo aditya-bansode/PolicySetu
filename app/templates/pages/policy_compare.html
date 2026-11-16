@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Policy Comparison — {{ policy.title | truncate(50) }} — PolicySetu{% endblock %}
+{% block page_name %}Policy Comparison{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('policies.list_policies') }}" style="color:var(--color-muted)">Policies</a>
+<span class="breadcrumb-sep">/</span>
+<a href="{{ url_for('policies.policy_detail', policy_id=policy.id) }}" style="color:var(--color-muted)">{{ policy.title | truncate(30) }}</a>
+<span class="breadcrumb-sep">/</span>
+<span class="breadcrumb-current">Comparison</span>
+{% endblock %}
+
+{% block content %}
+{% if is_demo_mode %}
+<div class="demo-banner">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text">
+    <strong>Demo Data</strong> — Side-by-side version comparison with simulated differential highlights.
+  </div>
+</div>
+{% endif %}
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-4);">
+  <div>
+    <h1 class="page-title">Policy Version Comparison</h1>
+    <p class="page-subtitle">{{ policy.title }}</p>
+  </div>
+  <div>
+    <a href="{{ url_for('policies.policy_detail', policy_id=policy.id) }}" class="btn btn-outline btn-sm">
+      &larr; Back to Policy Details
+    </a>
+  </div>
+</div>
+
+<!-- Comparison Controls -->
+<div class="filters-panel" style="margin-bottom: var(--space-6);">
+  <form method="GET" action="{{ url_for('policies.policy_compare', policy_id=policy.id) }}" style="display:flex; gap:var(--space-4); align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:var(--space-2);">
+      <label for="v1" style="font-weight:600; font-size:var(--text-sm); color:var(--color-slate);">Base Version:</label>
+      <select name="v1" id="v1" class="form-control" style="width:auto;">
+        {% for v in versions %}
+        <option value="{{ v.version_number }}" {% if v1 and v1.version_number == v.version_number %}selected{% endif %}>
+          Version {{ v.version_number }} ({{ v.created_at }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="font-size:1.1rem; color:var(--color-muted);">&rarr;</div>
+
+    <div style="display:flex; align-items:center; gap:var(--space-2);">
+      <label for="v2" style="font-weight:600; font-size:var(--text-sm); color:var(--color-slate);">Compared Version:</label>
+      <select name="v2" id="v2" class="form-control" style="width:auto;">
+        {% for v in versions %}
+        <option value="{{ v.version_number }}" {% if v2 and v2.version_number == v.version_number %}selected{% endif %}>
+          Version {{ v.version_number }} ({{ v.created_at }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-sm">Update Diff</button>
+  </form>
+</div>
+
+<!-- AI Change Narrative Summary -->
+<div class="detail-card" style="margin-bottom:var(--space-6); border-left:4px solid var(--color-saffron);">
+  <div class="detail-card-title" style="display:flex; align-items:center; gap:var(--space-2);">
+    AI Summary of Key Amendments
+  </div>
+  <p style="font-size:var(--text-sm); color:#374151; line-height:1.7;">
+    {% if v2 and v2.diff_summary %}
+      {{ v2.diff_summary }}
+    {% else %}
+      Comparing Version {{ v1.version_number if v1 else 1 }} with Version {{ v2.version_number if v2 else 2 }}. Key modifications focus on eligibility thresholds and administrative implementation guidelines.
+    {% endif %}
+  </p>
+  {% if v2 and v2.changed_sections %}
+  <div style="margin-top:var(--space-3); display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap;">
+    <span style="font-size:var(--text-xs); color:var(--color-muted); font-weight:600;">Affected Sections:</span>
+    {% for sec in v2.changed_sections %}
+    <span class="badge badge-updated">{{ sec }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Detailed Clause Changes -->
+{% if comparison and comparison.identical %}
+<div class="detail-card" style="margin-bottom:var(--space-6); background:rgba(16,185,129,0.06); border-left:4px solid var(--color-success);">
+  <div class="detail-card-title" style="color:var(--color-success);">
+    Versions are Content-Identical
+  </div>
+  <p style="font-size:var(--text-sm); color:var(--color-slate); margin:0;">
+    No substantive policy or clause differences were detected between Version {{ v1.version_number if v1 else 1 }} and Version {{ v2.version_number if v2 else 2 }}.
+  </p>
+</div>
+{% endif %}
+
+<!-- 1. Modified Clauses -->
+{% if v2 and v2.modified_clauses %}
+<div class="section-header">
+  <h2 class="section-title">Modified Clauses (Amended Language)</h2>
+</div>
+<div style="margin-bottom:var(--space-6);">
+  {% for clause in v2.modified_clauses %}
+  <div class="change-clause">
+    <div class="change-clause-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>{{ clause.section }}</span>
+      {% if clause.page %}
+      <span class="badge" style="font-size:0.7rem; background:rgba(0,0,0,0.06); color:var(--color-slate);">Page {{ clause.page }}</span>
+      {% endif %}
+    </div>
+    <div class="change-row">
+      <div class="change-before">
+        <div style="font-size:var(--text-xs); font-weight:700; text-transform:uppercase; margin-bottom:var(--space-1); color:#991B1B;">
+          Previous Version (v{{ v1.version_number if v1 else 1 }})
+        </div>
+        <p class="diff-removed">{{ clause.before }}</p>
+      </div>
+      <div class="change-after">
+        <div style="font-size:var(--text-xs); font-weight:700; text-transform:uppercase; margin-bottom:var(--space-1); color:#065F46;">
+          Amended Version (v{{ v2.version_number if v2 else 2 }})
+        </div>
+        <p class="diff-added">{{ clause.after }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- 2. Newly Added Clauses -->
+{% if v2 and v2.added_clauses %}
+<div class="section-header">
+  <h2 class="section-title" style="color:var(--color-success);">Newly Added Clauses</h2>
+</div>
+<div style="margin-bottom:var(--space-6);">
+  {% for clause in v2.added_clauses %}
+  <div class="change-clause" style="border-left:4px solid var(--color-success);">
+    <div class="change-clause-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="color:var(--color-success);">+ {{ clause.section }}</span>
+      {% if clause.page %}
+      <span class="badge" style="font-size:0.7rem; background:rgba(5,150,105,0.1); color:var(--color-success);">Page {{ clause.page }}</span>
+      {% endif %}
+    </div>
+    <div style="padding:var(--space-4); background:rgba(5,150,105,0.04);">
+      <p class="diff-added" style="margin:0;">{{ clause.text }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- 3. Removed / Repealed Clauses -->
+{% if v2 and v2.removed_clauses %}
+<div class="section-header">
+  <h2 class="section-title" style="color:var(--color-error);">Removed or Repealed Clauses</h2>
+</div>
+<div style="margin-bottom:var(--space-6);">
+  {% for clause in v2.removed_clauses %}
+  <div class="change-clause" style="border-left:4px solid var(--color-error);">
+    <div class="change-clause-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="color:var(--color-error);">- {{ clause.section }}</span>
+      {% if clause.page %}
+      <span class="badge" style="font-size:0.7rem; background:rgba(239,68,68,0.1); color:var(--color-error);">Page {{ clause.page }}</span>
+      {% endif %}
+    </div>
+    <div style="padding:var(--space-4); background:rgba(239,68,68,0.04);">
+      <p class="diff-removed" style="margin:0;">{{ clause.text }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+
+<!-- Side by side raw comparison -->
+<div class="section-header">
+  <h2 class="section-title">Side-by-Side Text Comparison</h2>
+</div>
+
+<div class="compare-grid">
+  <!-- Version 1 Panel -->
+  <div class="version-panel">
+    <div class="version-panel-header">
+      <div class="version-panel-title">Version {{ v1.version_number if v1 else 1 }} (Base)</div>
+      <div class="version-panel-date">Captured on: {{ v1.created_at if v1 else '2026-09-01' }}</div>
+    </div>
+    <div class="version-panel-body">
+      <p style="margin-bottom:var(--space-3);">
+        {{ v1.raw_text_excerpt if v1 else policy.summary }}
+      </p>
+      <div style="padding:var(--space-3); background:var(--color-bg); border-radius:var(--radius-sm); border:1px solid var(--color-border); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-slate);">
+        SHA-256 Hash: {{ v1.content_hash if v1 else 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Version 2 Panel -->
+  <div class="version-panel">
+    <div class="version-panel-header">
+      <div class="version-panel-title">Version {{ v2.version_number if v2 else 2 }} (Modified)</div>
+      <div class="version-panel-date">Captured on: {{ v2.created_at if v2 else '2026-11-05' }}</div>
+    </div>
+    <div class="version-panel-body">
+      <p style="margin-bottom:var(--space-3);">
+        {{ v2.raw_text_excerpt if v2 else policy.summary }}
+      </p>
+      {% if v2 and v2.added_text %}
+      <div style="margin-top:var(--space-3); padding:var(--space-3); background:rgba(5,150,105,0.06); border-radius:var(--radius-sm); border-left:3px solid var(--color-success);">
+        <strong style="color:var(--color-success); font-size:var(--text-xs); text-transform:uppercase;">Added Language:</strong>
+        <p style="font-size:var(--text-sm); margin-top:4px;" class="diff-added">{{ v2.added_text }}</p>
+      </div>
+      {% endif %}
+      <div style="margin-top:var(--space-3); padding:var(--space-3); background:var(--color-bg); border-radius:var(--radius-sm); border:1px solid var(--color-border); font-family:var(--font-mono); font-size:var(--text-xs); color:var(--color-slate);">
+        SHA-256 Hash: {{ v2.content_hash if v2 else 'f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2' }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ t('nav.search', 'Keyword Search') }} — PolicySetu{% endblock %}
+{% block page_name %}{{ t('nav.search', 'Keyword Search') }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">{{ t('nav.search', 'Keyword Search') }}</h1>
+  <p class="page-subtitle">Find government schemes, gazettes, circulars, and notifications across India</p>
+</div>
+
+{% if is_demo_mode %}
+<div class="demo-banner">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text">
+    <strong>Demo Search Index</strong> — Try searching for "Kisan", "Education", "Pension", "Tax", or "Maharashtra".
+  </div>
+</div>
+{% endif %}
+
+<!-- Search Input Box -->
+<div class="filters-panel" style="margin-bottom:var(--space-6);">
+  <form id="globalSearchForm" onsubmit="event.preventDefault(); triggerSearch();" style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+    <div style="flex:1; min-width:260px;" class="search-box">
+      <span class="search-icon">
+        <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </span>
+      <input type="text" id="liveSearchInput" class="form-control" placeholder="Search keywords, ministries, schemes, or gazette numbers..." autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+</div>
+
+<!-- Status / Count indicator -->
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+  <div id="searchFeedback" class="text-muted text-sm">
+    Enter a search term above to begin discovery.
+  </div>
+  {% if is_demo_mode %}
+  <span class="badge badge-demo">Demo Results</span>
+  {% else %}
+  <span class="badge badge-verified" style="font-size:var(--text-xs); background:rgba(16,185,129,0.1); color:#059669; border:1px solid rgba(16,185,129,0.3);">Official Database Search</span>
+  {% endif %}
+</div>
+
+<!-- Results Grid -->
+<div id="searchResultsGrid" class="policy-grid">
+  <!-- Dynamic cards inserted here -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function triggerSearch() {
+  const q = document.getElementById('liveSearchInput').value.trim();
+  const feedback = document.getElementById('searchFeedback');
+  const grid = document.getElementById('searchResultsGrid');
+
+  if (!q) {
+    feedback.textContent = 'Please enter a search term.';
+    grid.innerHTML = '';
+    return;
+  }
+
+  feedback.textContent = `Searching for "${q}"...`;
+  grid.innerHTML = '<div class="loading-spinner"><div class="spinner"></div> Searching database...</div>';
+
+  try {
+    const res = await apiGet('/search', { q });
+    const items = res.data || [];
+
+    if (items.length === 0) {
+      feedback.textContent = `0 results found for "${q}".`;
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1;">
+          <h3 class="empty-title">No policies found matching "${escHtml(q)}"</h3>
+          <p class="empty-text">Try searching with broader terms or check your spelling.</p>
+        </div>
+      `;
+    } else {
+      feedback.textContent = `Found ${items.length} relevant polic${items.length === 1 ? 'y' : 'ies'} for "${q}":`;
+      grid.innerHTML = items.map(renderPolicyCard).join('');
+    }
+  } catch (err) {
+    feedback.textContent = 'Search failed. Please try again.';
+    grid.innerHTML = '';
+    showToast('Search encountered an error.', 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q');
+  if (q) {
+    document.getElementById('liveSearchInput').value = q;
+    triggerSearch();
+  }
+});
+</script>
+{% endblock %}

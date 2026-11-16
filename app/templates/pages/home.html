@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}PolicySetu — {{ t('nav.home') }}{% endblock %}
+{% block page_name %}{{ t('nav.home') }}{% endblock %}
+
+{% block content %}
+
+{% if is_demo_mode %}
+<!-- Demo Banner -->
+<div class="demo-banner" role="alert">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text">
+    <strong>{{ t('nav.demo_mode') }}</strong> — The statistics and policies shown below are sample data for UI evaluation.
+  </div>
+</div>
+{% endif %}
+
+<!-- Hero Section -->
+<section class="home-hero" aria-label="Welcome">
+  <div class="hero-brand">
+    <h1 class="hero-brand-headline">Policy<span>Setu</span></h1>
+    <div class="hero-tagline">{{ t('home.tagline') }}</div>
+  </div>
+  <p class="hero-subtitle">
+    {{ t('home.subtitle') }}
+  </p>
+  <div class="hero-actions">
+    <a href="{{ url_for('policies.list_policies') }}" class="btn btn-accent btn-lg">
+      <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+      {{ t('home.explore_btn') }}
+    </a>
+    <a href="{{ url_for('ai_chat.ask') }}" class="btn btn-outline btn-lg"
+       style="color:#fff;border-color:rgba(255,255,255,0.4)">
+      <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      {{ t('home.ask_ai_btn') }}
+    </a>
+  </div>
+</section>
+
+<!-- KPI Cards -->
+<div class="kpi-grid" role="region" aria-label="Key statistics">
+
+  <div class="kpi-card">
+    <div class="kpi-icon navy">
+      <svg class="icon icon-md" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value" id="kpiTotal">{{ total_policies }}</div>
+      <div class="kpi-label">{{ t('home.kpi_total') }}</div>
+      <div class="kpi-sub">{{ t('home.kpi_total_sub') }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon green">
+      <svg class="icon icon-md" style="stroke:var(--color-success);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value" style="color:var(--color-success)" id="kpiNew">{{ new_count }}</div>
+      <div class="kpi-label">{{ t('home.kpi_new') }}</div>
+      <div class="kpi-sub">{{ t('home.kpi_new_sub') }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon amber">
+      <svg class="icon icon-md" style="stroke:var(--color-warning);" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value" style="color:var(--color-warning)" id="kpiModified">{{ modified_count }}</div>
+      <div class="kpi-label">{{ t('home.kpi_updated') }}</div>
+      <div class="kpi-sub">{{ t('home.kpi_updated_sub') }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-icon saffron">
+      <svg class="icon icon-md" style="stroke:var(--color-saffron-dark);" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+    </div>
+    <div class="kpi-data">
+      <div class="kpi-value" id="kpiSources">{{ active_sources }}</div>
+      <div class="kpi-label">{{ t('home.kpi_sources') }}</div>
+      <div class="kpi-sub">{{ t('home.kpi_sources_sub') }}</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid" role="region" aria-label="Analytics">
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div class="chart-card-title">{{ t('home.chart_categories') }}</div>
+      <div class="chart-card-sub">{{ t('home.chart_categories_sub') }}</div>
+    </div>
+    <div class="chart-container">
+      <canvas id="categoryChart" aria-label="Policy category distribution chart" role="img"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div class="chart-card-title">{{ t('home.chart_jurisdiction') }}</div>
+      <div class="chart-card-sub">{{ t('home.chart_jurisdiction_sub') }}</div>
+    </div>
+    <div class="chart-container">
+      <canvas id="jurisdictionChart" aria-label="Jurisdiction distribution chart" role="img"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div class="chart-card-title">{{ t('home.chart_timeline') }}</div>
+      <div class="chart-card-sub">{{ t('home.chart_timeline_sub') }}</div>
+    </div>
+    <div class="chart-container">
+      <canvas id="timelineChart" aria-label="Policy publication timeline chart" role="img"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- New Policies Feed -->
+{% if new_policies %}
+<section role="region" aria-label="New policies">
+  <div class="section-header">
+    <h2 class="section-title">
+      <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      {{ t('home.new_policies_title') }}
+    </h2>
+    <a href="{{ url_for('policies.list_policies') }}?is_new=1" class="section-link">{{ t('home.view_all_new') }}</a>
+  </div>
+  <div class="policy-grid">
+    {% for policy in new_policies %}
+    <article class="policy-card" onclick="window.location='/policies/{{ policy.id }}'"
+             role="article" tabindex="0"
+             onkeydown="if(event.key==='Enter')window.location='/policies/{{ policy.id }}'">
+      <div class="policy-card-header">
+        <div class="policy-card-badges">
+          <span class="badge badge-new">New</span>
+          <span class="badge badge-category">{{ policy.category }}</span>
+        </div>
+        <span class="policy-card-type">{{ policy.type | title }}</span>
+      </div>
+      <h3 class="policy-card-title">
+        {% if current_lang == 'hi' and policy.title_hi %}
+          {{ policy.title_hi }}
+        {% elif current_lang == 'mr' and policy.title_mr %}
+          {{ policy.title_mr }}
+        {% else %}
+          {{ policy.title }}
+        {% endif %}
+      </h3>
+      <div class="policy-card-ministry">
+        <span>{{ policy.ministry }}</span>
+        <span class="badge badge-central" style="margin-left:auto">{{ policy.jurisdiction }}</span>
+      </div>
+      <p class="policy-card-summary">
+        {% if current_lang == 'hi' and policy.summary_hi %}
+          {{ policy.summary_hi[:180] }}...
+        {% elif current_lang == 'mr' and policy.summary_mr %}
+          {{ policy.summary_mr[:180] }}...
+        {% else %}
+          {{ policy.summary[:180] }}...
+        {% endif %}
+      </p>
+      <div class="policy-card-meta">
+        <span class="meta-item">{{ t('common.published') }}: {{ policy.published_date }}</span>
+        <span class="meta-item">{{ t('common.detected') }}: {{ policy.detected_date }}</span>
+      </div>
+      <div class="policy-card-stakeholders">
+        {% for s in policy.stakeholders[:3] %}
+        <span class="stakeholder-chip">{{ s }}</span>
+        {% endfor %}
+      </div>
+      <div class="policy-card-actions">
+        <a href="/policies/{{ policy.id }}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">{{ t('common.view_details') }}</a>
+        <a href="{{ policy.official_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline btn-sm" onclick="event.stopPropagation()">{{ t('common.official_source') }} &rarr;</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Updated Policies -->
+{% if modified_policies %}
+<section style="margin-top:var(--space-8)" role="region" aria-label="Updated policies">
+  <div class="section-header">
+    <h2 class="section-title">
+      <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      {{ t('home.updated_policies_title') }}
+    </h2>
+    <a href="{{ url_for('policies.list_policies') }}?is_modified=1" class="section-link">{{ t('home.view_all_updated') }}</a>
+  </div>
+  <div class="policy-grid">
+    {% for policy in modified_policies %}
+    <article class="policy-card" onclick="window.location='/policies/{{ policy.id }}'"
+             role="article" tabindex="0">
+      <div class="policy-card-header">
+        <div class="policy-card-badges">
+          <span class="badge badge-updated">Updated</span>
+          <span class="badge badge-category">{{ policy.category }}</span>
+        </div>
+      </div>
+      <h3 class="policy-card-title">
+        {% if current_lang == 'hi' and policy.title_hi %}
+          {{ policy.title_hi }}
+        {% elif current_lang == 'mr' and policy.title_mr %}
+          {{ policy.title_mr }}
+        {% else %}
+          {{ policy.title }}
+        {% endif %}
+      </h3>
+      <div class="policy-card-ministry"><span>{{ policy.ministry }}</span></div>
+      <p class="policy-card-summary">
+        {% if current_lang == 'hi' and policy.summary_hi %}
+          {{ policy.summary_hi[:180] }}...
+        {% elif current_lang == 'mr' and policy.summary_mr %}
+          {{ policy.summary_mr[:180] }}...
+        {% else %}
+          {{ policy.summary[:180] }}...
+        {% endif %}
+      </p>
+      <div class="policy-card-meta">
+        <span class="meta-item">{{ t('common.published') }}: {{ policy.published_date }}</span>
+        <span class="meta-item">{{ t('common.detected') }}: {{ policy.detected_date }}</span>
+      </div>
+      <div class="policy-card-actions">
+        <a href="/policies/{{ policy.id }}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">{{ t('common.view_details') }}</a>
+        <a href="/policies/{{ policy.id }}/compare" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">{{ t('common.compare_versions') }}</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Category Grid -->
+<section style="margin-top:var(--space-8)" role="region" aria-label="Browse by category">
+  <div class="section-header">
+    <h2 class="section-title">{{ t('home.categories_title') }}</h2>
+  </div>
+  <div class="category-grid">
+    {% set categories = [
+      {'slug':'agriculture','name':'Agriculture','name_hi':'कृषि','name_mr':'शेती','code':'AG'},
+      {'slug':'education','name':'Education','name_hi':'शिक्षा','name_mr':'शिक्षण','code':'ED'},
+      {'slug':'health','name':'Health','name_hi':'स्वास्थ्य','name_mr':'आरोग्य','code':'HE'},
+      {'slug':'finance','name':'Finance','name_hi':'वित्त','name_mr':'वित्त','code':'FN'},
+      {'slug':'housing','name':'Housing','name_hi':'आवास','name_mr':'गृहनिर्माण','code':'HS'},
+      {'slug':'employment','name':'Employment','name_hi':'रोज़गार','name_mr':'रोजगार','code':'EM'},
+      {'slug':'environment','name':'Environment','name_hi':'पर्यावरण','name_mr':'पर्यावरण','code':'EV'},
+      {'slug':'digital','name':'Digital India','name_hi':'डिजिटल भारत','name_mr':'डिजिटल भारत','code':'DI'},
+      {'slug':'social_welfare','name':'Social Welfare','name_hi':'समाज कल्याण','name_mr':'समाज कल्याण','code':'SW'},
+      {'slug':'msme','name':'Business & MSME','name_hi':'उद्योग व एमएसएमई','name_mr':'उद्योग व एमएसएमई','code':'MS'},
+      {'slug':'infrastructure','name':'Infrastructure','name_hi':'बुनियादी ढांचा','name_mr':'पायाभूत सुविधा','code':'IN'},
+      {'slug':'women_child','name':'Women & Child','name_hi':'महिला व बाल','name_mr':'महिला व बाल','code':'WC'},
+      {'slug':'senior','name':'Senior Citizens','name_hi':'वरिष्ठ नागरिक','name_mr':'ज्येष्ठ नागरिक','code':'SC'},
+      {'slug':'youth','name':'Youth','name_hi':'युवा कल्याण','name_mr':'युवक कल्याण','code':'YT'},
+    ] %}
+    {% for cat in categories %}
+    <a href="{{ url_for('policies.list_policies') }}?category={{ cat.slug }}"
+       class="category-card" title="{{ cat.name }} policies">
+      <div class="category-card-badge" style="font-size:0.75rem; font-weight:700; color:var(--color-navy); background:var(--color-bg-alt); padding:4px 8px; border-radius:var(--radius-sm); border:1px solid var(--color-border);">
+        {{ cat.code }}
+      </div>
+      <div class="category-card-name">
+        {% if current_lang == 'hi' and cat.name_hi %}{{ cat.name_hi }}
+        {% elif current_lang == 'mr' and cat.name_mr %}{{ cat.name_mr }}
+        {% else %}{{ cat.name }}{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Active Sources -->
+<section style="margin-top:var(--space-8)" role="region" aria-label="Monitored sources">
+  <div class="section-header">
+    <h2 class="section-title">
+      <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+      {{ t('home.sources_title') }}
+    </h2>
+    <a href="{{ url_for('monitor.monitor') }}" class="section-link">{{ t('home.view_all_sources') }}</a>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table" aria-label="Government sources status">
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Jurisdiction</th>
+          <th>Status</th>
+          <th>Last Checked</th>
+          <th>Policies</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for source in sources %}
+        <tr>
+          <td>
+            <div class="source-name-cell">
+              <div>
+                <div class="source-name">{{ source.name }}</div>
+                <div class="source-url">{{ source.url }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ source.jurisdiction }}</td>
+          <td>
+            <span class="d-flex align-center">
+              <span class="status-dot {{ source.status }}"></span>
+              <span class="badge badge-{{ source.status }}">{{ source.status | title }}</span>
+            </span>
+          </td>
+          <td>{{ source.last_checked | replace('T', ' ') | truncate(16, True, '') }}</td>
+          <td><strong>{{ source.policies_count }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

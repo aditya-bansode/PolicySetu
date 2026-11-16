@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Ask PolicySetu AI — PolicySetu{% endblock %}
+{% block page_name %}Ask PolicySetu AI{% endblock %}
+
+{% block content %}
+{% if is_demo_mode %}
+<div class="demo-banner">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text">
+    <strong>Demo Retrieval-Augmented Generation (RAG)</strong> — Answers are grounded in official Indian policy documents. Example queries: <strong>PM-KISAN</strong>, <strong>NPS</strong>, or <strong>NEP 2020</strong>.
+  </div>
+</div>
+{% endif %}
+
+<div class="chat-layout">
+  <!-- Main Interactive Chat Panel -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-header-icon" style="background:rgba(255,255,255,0.15);">
+        <svg class="icon icon-md" style="stroke:#FFFFFF;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      </div>
+      <div class="chat-header-info">
+        <div class="chat-header-title">{{ t('ask_ai.title', 'PolicySetu AI Assistant') }}</div>
+        <div class="chat-header-status">
+          <span class="dot"></span>
+          <span>{% if is_demo_mode %}Official Document RAG Active (Demo Mode){% else %}Official Document RAG Active (Verified Knowledge Base){% endif %}</span>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:var(--space-2);">
+        <select id="chatLangSelect" class="form-control" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.3); font-size:var(--text-xs); padding:4px 8px; width:auto;">
+          <option value="en" {% if current_lang == 'en' %}selected{% endif %} style="color:#000;">English</option>
+          <option value="hi" {% if current_lang == 'hi' %}selected{% endif %} style="color:#000;">हिन्दी (Hindi)</option>
+          <option value="mr" {% if current_lang == 'mr' %}selected{% endif %} style="color:#000;">मराठी (Marathi)</option>
+        </select>
+        <button id="clearChatBtn" class="btn btn-ghost btn-sm" style="color:white; padding:4px 8px; font-size:var(--text-xs);" title="Clear Conversation">
+          {{ t('common.clear', 'Clear') }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
+      <div class="chat-message ai">
+        <div class="chat-avatar ai" style="font-size:0.75rem; font-weight:700;">AI</div>
+        <div class="chat-message-content">
+          <div class="chat-bubble ai">
+            <strong>{{ t('ask_ai.welcome_title', 'Welcome to PolicySetu AI') }}</strong>
+            <p style="margin-top:8px; margin-bottom:8px;">{{ t('ask_ai.welcome_p1', 'I am here to decode Indian central and state government notifications, acts, circulars, and schemes into simple, unambiguous explanations.') }}</p>
+            <p style="margin:0;">{{ t('ask_ai.welcome_p2', 'All answers are cited directly with verified official government links. What policy would you like to explore today?') }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="chat-input-area">
+      <form id="chatForm" class="chat-input-row">
+        <textarea id="chatInput" class="chat-input" rows="1" placeholder="{{ t('ask_ai.input_placeholder', 'Ask anything about an Indian government policy or scheme...') }}" aria-label="Ask PolicySetu AI"></textarea>
+        <button type="submit" id="chatSendBtn" class="chat-send-btn" aria-label="Send message">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </form>
+      <div style="font-size:0.7rem; color:var(--color-muted); margin-top:6px; text-align:center;">
+        {{ t('ask_ai.disclaimer', 'Answers are AI-synthesized from official records and do not substitute for formal legal determinations.') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: Recommended / Prompt Starters -->
+  <aside class="chat-sidebar">
+    <div class="detail-card" style="margin-bottom:var(--space-4);">
+      <div class="detail-card-title">Suggested Inquiries</div>
+      <div class="chat-suggestions">
+        {% for q in suggested_questions %}
+        <button type="button" class="suggested-q-btn">
+          {{ q }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-card-title">PolicySetu Architecture Standards</div>
+      <ul style="font-size:var(--text-xs); color:var(--color-slate); line-height:1.6; display:flex; flex-direction:column; gap:var(--space-2);">
+        <li>Strict RAG constraint: No fabricated clauses</li>
+        <li>Direct hyperlinks to authoritative gazettes & portals</li>
+        <li>Plain language without bureaucratic legalese</li>
+        <li>English, Hindi, and Marathi ready</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/ai_chat.js') }}"></script>
+{% endblock %}

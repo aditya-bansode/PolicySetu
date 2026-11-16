@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Policy Impact Analysis — {{ policy.title | truncate(50) }} — PolicySetu{% endblock %}
+{% block page_name %}Impact Analysis{% endblock %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('policies.list_policies') }}" style="color:var(--color-muted)">Policies</a>
+<span class="breadcrumb-sep">/</span>
+<a href="{{ url_for('policies.policy_detail', policy_id=policy.id) }}" style="color:var(--color-muted)">{{ policy.title | truncate(30) }}</a>
+<span class="breadcrumb-sep">/</span>
+<span class="breadcrumb-current">Impact Analysis</span>
+{% endblock %}
+
+{% block content %}
+{% if is_demo_mode %}
+<div class="demo-banner">
+  <span class="demo-banner-icon">
+    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+  </span>
+  <div class="demo-banner-text">
+    <strong>Demo Data</strong> — AI-inferred impact assessments. These represent potential stakeholder intersections, not formal legal advice.
+  </div>
+</div>
+{% endif %}
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-4);">
+  <div>
+    <h1 class="page-title">Stakeholder Impact Assessment</h1>
+    <p class="page-subtitle">{{ policy.title }}</p>
+  </div>
+  <div>
+    <a href="{{ url_for('policies.policy_detail', policy_id=policy.id) }}" class="btn btn-outline btn-sm">
+      &larr; Back to Policy Details
+    </a>
+  </div>
+</div>
+
+<!-- Legal & Advisory Disclaimer Notice -->
+<div style="background:#FFFBEB; border:1px solid #FCD34D; border-left:4px solid var(--color-warning); padding:var(--space-4); border-radius:var(--radius-md); margin-bottom:var(--space-6);">
+  <div style="font-weight:700; color:#92400E; margin-bottom:4px; display:flex; align-items:center; gap:var(--space-2);">
+    Important Analytical Notice
+  </div>
+  <p style="font-size:var(--text-sm); color:#78350F; line-height:1.6;">
+    PolicySetu automatically evaluates newly released gazette notices, orders, and acts to detect which groups in Indian society might be touched by regulatory adjustments or financial schemes. This information highlights <strong>potential relevance</strong> and does not constitute conclusive individual legal eligibility.
+  </p>
+</div>
+
+<!-- Primary Policy Metadata Box -->
+<div class="detail-card" style="margin-bottom:var(--space-6);">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2);">
+    <div>
+      <span class="badge badge-category">{{ policy.category }}</span>
+      <span class="badge badge-central">{{ policy.jurisdiction }}</span>
+    </div>
+    <div style="font-size:var(--text-xs); color:var(--color-muted);">
+      Published: {{ policy.published_date }} | Detected: {{ policy.detected_date }}
+    </div>
+  </div>
+  <p style="margin-top:var(--space-3); font-size:var(--text-sm); color:var(--color-slate); line-height:1.7;">
+    {{ policy.summary }}
+  </p>
+</div>
+
+<!-- Impacted Stakeholder Groups Grid -->
+<div class="section-header">
+  <h2 class="section-title">Evaluated Stakeholder Sectors</h2>
+</div>
+
+<div class="impact-grid" style="margin-bottom:var(--space-8);">
+  {% set all_sectors = [
+    {'name': 'Citizens', 'code': 'CZ', 'slug': 'citizens', 'desc': 'General civic entitlements, rights, safety regulations, and public domain benefits.'},
+    {'name': 'Farmers', 'code': 'FR', 'slug': 'farmers', 'desc': 'Agricultural subsidies, crop insurance, procurement prices, and rural irrigation.'},
+    {'name': 'Students', 'code': 'ST', 'slug': 'students', 'desc': 'Educational curriculum, scholarship disbursements, university entrance exams, and skill certifications.'},
+    {'name': 'Employees', 'code': 'EE', 'slug': 'employees', 'desc': 'Labour safety laws, statutory retirement contributions (EPF/NPS), and workplace taxation.'},
+    {'name': 'Business Owners', 'code': 'BO', 'slug': 'business', 'desc': 'Corporate compliances, MSME credit lines, GST rules, import/export duties, and environmental clearances.'},
+    {'name': 'Senior Citizens', 'code': 'SC', 'slug': 'seniors', 'desc': 'Old age pensions, health accessibility guidelines, and savings interest reliefs.'},
+    {'name': 'Educational Institutions', 'code': 'EI', 'slug': 'institutions', 'desc': 'Accreditation, NEP curriculum integration, and institutional governance frameworks.'}
+  ] %}
+
+  {% for sector in all_sectors %}
+  {% set is_affected = (policy.affected_groups and sector.name in policy.affected_groups) or (policy.stakeholders and sector.name in policy.stakeholders) %}
+  <div class="impact-card" style="border-top: 3px solid {% if is_affected %}var(--color-saffron){% else %}var(--color-border){% endif %}; opacity: {% if is_affected %}1{% else %}0.75{% endif %};">
+    <div class="impact-card-header">
+      <div class="impact-icon" style="background:{% if is_affected %}rgba(245,158,11,0.15){% else %}var(--color-bg-alt){% endif %}; font-weight:700; font-size:0.8rem; color:var(--color-navy);">
+        {{ sector.code }}
+      </div>
+      <div>
+        <div class="impact-group-name">{{ sector.name }}</div>
+        {% if is_affected %}
+        <span class="badge badge-updated" style="font-size:0.65rem;">Directly Impacted</span>
+        {% else %}
+        <span class="badge" style="background:var(--color-bg-alt); color:var(--color-muted); font-size:0.65rem;">Low / No Intersection</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="impact-desc">
+      {% if is_affected and policy.affected_groups and sector.name in policy.affected_groups %}
+        <strong style="color:var(--color-navy); display:block; margin-bottom:4px;">Specific Analysis:</strong>
+        {{ policy.affected_groups[sector.name] }}
+      {% else %}
+        {{ sector.desc }}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Secondary Actions -->
+<div class="detail-card" style="background:var(--color-paper); border:1px solid var(--color-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-4);">
+  <div>
+    <h3 style="font-size:var(--text-base); font-weight:600; color:var(--color-navy);">Need deeper clarification for your group?</h3>
+    <p style="font-size:var(--text-sm); color:var(--color-muted);">Query our AI system grounded in the original source documents.</p>
+  </div>
+  <a href="{{ url_for('ai_chat.ask') }}" class="btn btn-primary btn-sm">
+    Ask PolicySetu AI
+  </a>
+</div>
+{% endblock %}

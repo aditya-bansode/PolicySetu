@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}About PolicySetu — Bridging Government Policies & People{% endblock %}
+{% block page_name %}About{% endblock %}
+
+{% block content %}
+<div class="about-hero">
+  <div class="hero-brand" style="margin-bottom:var(--space-3);">
+    <h1 style="font-size:clamp(2.4rem, 5vw, 3.5rem); font-weight:800; color:var(--color-navy); letter-spacing:-0.03em; margin:0;">
+      Policy<span style="color:var(--color-saffron);">Setu</span>
+    </h1>
+    <div style="font-size:clamp(0.9rem, 2vw, 1.15rem); font-weight:600; color:var(--color-saffron-dark); letter-spacing:0.04em; margin-top:var(--space-2); text-transform:uppercase;">
+      Bridging Government Policies &amp; People
+    </div>
+  </div>
+  <p class="about-hero-tagline" style="margin-top:var(--space-3); max-width:680px; margin-left:auto; margin-right:auto;">
+    Democratizing access to Indian central, state, and union territory policies through transparent, verified civic intelligence.
+  </p>
+</div>
+
+<div class="about-grid">
+  <div class="about-card">
+    <div class="about-card-icon" style="color:var(--color-navy);">
+      <svg class="icon icon-xl" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2l10 8H2l10-8z"></path></svg>
+    </div>
+    <div class="about-card-title">Verified Official Portals</div>
+    <div class="about-card-text">
+      PolicySetu ingests data strictly from verified official government websites, including PIB, India.gov.in, MyGov, state gazettes, and parliamentary repositories. We never fabricate policies or source URLs.
+    </div>
+  </div>
+
+  <div class="about-card">
+    <div class="about-card-icon" style="color:var(--color-navy);">
+      <svg class="icon icon-xl" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </div>
+    <div class="about-card-title">RAG-Grounded AI Analysis</div>
+    <div class="about-card-text">
+      Complex circulars and gazettes are translated into accessible language using Retrieval-Augmented Generation. Every answer provided by PolicySetu AI links back to exact clauses and official files.
+    </div>
+  </div>
+
+  <div class="about-card">
+    <div class="about-card-icon" style="color:var(--color-navy);">
+      <svg class="icon icon-xl" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+    </div>
+    <div class="about-card-title">Amendment Tracking</div>
+    <div class="about-card-text">
+      When gazette provisions change, PolicySetu’s cryptographic hash pipelines detect changes, generating side-by-side diffs and impact assessments for farmers, students, and entrepreneurs.
+    </div>
+  </div>
+
+  <div class="about-card">
+    <div class="about-card-icon" style="color:var(--color-navy);">
+      <svg class="icon icon-xl" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+    </div>
+    <div class="about-card-title">Privacy by Design</div>
+    <div class="about-card-text">
+      No phone numbers required, no SMS spam, no OTP verification. PolicySetu is a pure civic-tech discovery tool focused entirely on public transparency and citizen enlightenment.
+    </div>
+  </div>
+</div>
+
+<div class="detail-card" style="text-align:center; padding:var(--space-8);">
+  <h2 style="font-size:var(--text-xl); font-weight:700; color:var(--color-navy); margin-bottom:var(--space-3);">
+    Join Us in Transforming Civic Awareness
+  </h2>
+  <p style="font-size:var(--text-sm); color:var(--color-muted); max-width:600px; margin:0 auto var(--space-6); line-height:1.7;">
+    Whether you are an agriculturalist navigating PM-KISAN, a student evaluating educational reforms under NEP 2020, or a startup founder tracking tax exemptions, PolicySetu is your civic bridge.
+  </p>
+  <div style="display:flex; justify-content:center; gap:var(--space-3); flex-wrap:wrap;">
+    <a href="{{ url_for('policies.list_policies') }}" class="btn btn-primary btn-sm">Browse Policies</a>
+    <a href="{{ url_for('ai_chat.ask') }}" class="btn btn-accent btn-sm">Consult AI Assistant</a>
+  </div>
+</div>
+{% endblock %}

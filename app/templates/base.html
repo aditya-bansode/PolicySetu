@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PolicySetu — Bridging Government Policies & People. Monitor, understand and explore Indian government policies in one place.">
+  <meta name="theme-color" content="#0B2A6F">
+
+  <title>{% block title %}PolicySetu — Bridging Government Policies & People{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/app-icon.png') }}">
+
+  <!-- Google Fonts: Inter + Noto Sans Devanagari -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- PolicySetu Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+
+  <!-- Early Theme Init to avoid FOUC -->
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('ps_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     SIDEBAR OVERLAY (Mobile)
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay" role="presentation"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     APP LAYOUT
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR ────────────────────────────────────────────────────────── -->
+  <aside class="sidebar {% if sidebar_collapsed %}collapsed{% endif %}" id="sidebar" role="navigation" aria-label="Main navigation">
+
+    <!-- Brand Header -->
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">
+        <img src="{{ url_for('static', filename='img/app-icon.png') }}" alt="PolicySetu icon" width="36" height="36">
+      </div>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-name">Policy<span>Setu</span></div>
+        <div class="sidebar-brand-tagline">Bridging Policies & People</div>
+      </div>
+      <button class="sidebar-toggle desktop-toggle" id="sidebarToggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+      <button class="mobile-drawer-close" id="mobileDrawerClose" aria-label="Close navigation menu" title="Close menu">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav" role="menubar">
+
+      <div class="nav-section">
+        <div class="nav-section-label">{{ t('nav.dashboard') }}</div>
+        <a href="{{ url_for('main.home') }}" class="nav-link {% if active_page == 'home' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.home') }}</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">{{ t('nav.policies') }}</div>
+        <a href="{{ url_for('policies.list_policies') }}" class="nav-link {% if active_page == 'policies' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.all_policies') }}</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">{{ t('nav.discovery') }}</div>
+        <a href="{{ url_for('search.search') }}" class="nav-link {% if active_page == 'search' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.search', 'Keyword Search') }}</span>
+        </a>
+        <a href="{{ url_for('ai_chat.ask') }}" class="nav-link {% if active_page == 'ask' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.ask_ai') }}</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">{{ t('nav.system') }}</div>
+        <a href="{{ url_for('monitor.monitor') }}" class="nav-link {% if active_page == 'monitor' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.source_monitor') }}</span>
+        </a>
+        <a href="{{ url_for('settings.settings') }}" class="nav-link {% if active_page == 'settings' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.settings') }}</span>
+        </a>
+        <a href="{{ url_for('main.about') }}" class="nav-link {% if active_page == 'about' %}active{% endif %}" role="menuitem">
+          <span class="nav-icon">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </span>
+          <span class="nav-label">{{ t('nav.about') }}</span>
+        </a>
+      </div>
+
+    </nav>
+
+    <!-- Status / Mode Badge -->
+    <div class="sidebar-footer">
+      {% if is_demo_mode %}
+      <div class="demo-badge">
+        <svg class="icon icon-xs" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        <span class="demo-text">Demo Preview Mode</span>
+      </div>
+      {% else %}
+      <div class="system-status-indicator" style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--color-slate-light);padding:6px 12px;border-radius:var(--radius-sm);background:rgba(255,255,255,0.06);">
+        <span style="width:7px;height:7px;border-radius:50%;background:#10B981;display:inline-block;box-shadow:0 0 6px rgba(16,185,129,0.8);"></span>
+        <span>Official Ingestion Active</span>
+      </div>
+      {% endif %}
+    </div>
+
+  </aside>
+
+  <!-- ─── MAIN CONTENT ───────────────────────────────────────────────────── -->
+  <main class="main-content" id="mainContent" role="main">
+
+    <!-- Top Bar -->
+    <header class="topbar" role="banner">
+      <!-- Mobile Brand with Logo + Subtitle (aligned left on mobile top navbar) -->
+      <a href="{{ url_for('main.home') }}" class="topbar-brand-mobile" aria-label="PolicySetu Home">
+        <div class="topbar-logo">
+          <img src="{{ url_for('static', filename='img/app-icon.png') }}" alt="PolicySetu logo" width="32" height="32">
+        </div>
+        <div class="topbar-brand-text">
+          <div class="topbar-title">Policy<span>Setu</span></div>
+          <div class="topbar-subtitle">Government Policy Intelligence</div>
+        </div>
+      </a>
+
+      <!-- Breadcrumb (desktop) -->
+      <nav class="topbar-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('main.home') }}">PolicySetu</a>
+        <span class="breadcrumb-sep">/</span>
+        {% block breadcrumb %}
+        <span class="breadcrumb-current">{% block page_name %}Home{% endblock %}</span>
+        {% endblock %}
+      </nav>
+
+      <!-- Top Actions -->
+      <div class="topbar-actions">
+        <!-- Language Dropdown Selector -->
+        <div class="lang-dropdown-wrapper" id="langDropdownWrapper">
+          <button class="lang-dropdown-btn" id="langDropdownBtn" type="button" aria-expanded="false" aria-haspopup="true" aria-label="Select language">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <span id="currentLangLabel">{% if current_lang == 'hi' %}हिन्दी (HI){% elif current_lang == 'mr' %}मराठी (MR){% else %}English (EN){% endif %}</span>
+            <svg class="icon icon-xs" style="width:12px;height:12px;" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+
+          <div class="lang-dropdown-menu" id="langDropdownMenu" role="menu">
+            <div class="lang-dropdown-header">{{ t('lang.active_languages', 'Active Languages') }}</div>
+            <button class="lang-dropdown-item {% if current_lang == 'en' %}active{% endif %}" data-lang="en" role="menuitem">
+              <span>English</span>
+              {% if current_lang == 'en' %}<span style="color:var(--color-success); font-weight:700;">✓</span>{% endif %}
+            </button>
+            <button class="lang-dropdown-item {% if current_lang == 'hi' %}active{% endif %}" data-lang="hi" role="menuitem">
+              <span>हिन्दी (Hindi)</span>
+              {% if current_lang == 'hi' %}<span style="color:var(--color-success); font-weight:700;">✓</span>{% endif %}
+            </button>
+            <button class="lang-dropdown-item {% if current_lang == 'mr' %}active{% endif %}" data-lang="mr" role="menuitem">
+              <span>मराठी (Marathi)</span>
+              {% if current_lang == 'mr' %}<span style="color:var(--color-success); font-weight:700;">✓</span>{% endif %}
+            </button>
+
+            <div class="lang-dropdown-divider"></div>
+            <div class="lang-dropdown-soon-banner" onclick="showToast('Additional Indian languages will be released soon!', 'info', 3000)">
+              More Indian Languages Coming Soon
+            </div>
+          </div>
+        </div>
+
+        <!-- Theme Toggle Button -->
+        <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Switch between Light and Dark mode" title="Toggle theme">
+          <!-- Moon icon for light mode (click to switch to dark) -->
+          <svg class="icon icon-sm theme-icon-light" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <!-- Sun icon for dark mode (click to switch to light) -->
+          <svg class="icon icon-sm theme-icon-dark" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+
+        <!-- Mobile menu button (aligned right) -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" title="Open navigation menu">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+      {% block content %}{% endblock %}
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-label="Notifications"></div>
+
+<!-- PolicySetu Global JS -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

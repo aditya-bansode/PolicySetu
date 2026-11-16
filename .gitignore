@@ -1,0 +1,40 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# Local Databases, Logs & Dynamic Documents
+*.db
+*.sqlite3
+data/*
+!data/.gitkeep
+
+# Vercel & Node
+.vercel/
+node_modules/
+
+# Testing & Artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary & Scratch Files
+scratch/
